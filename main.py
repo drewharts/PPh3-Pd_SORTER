@@ -1,20 +1,17 @@
-#GOALS:
-    #FIGURE OUT WHAT WE WANT TO DO IN TERMS OF GOING FORWARD
-
-    #OPTIONS:
-    #1: KEEP DEVELOPING THIS TO CONSISTENTLY AND ACCURATELY REPLACE PHENYL WITH METHYL
-    #2: NOW THAT I'VE LEARNED OPENBABEL BETTER, MOVE ON TO FINGERPRINTS (SHUSEN)
-
-    #Questions to ask?
-        # DO I NEED A CLASS SO THAT EACH MOLECULE IS STORED DIFFERENTLY?
-        # CAN I DELETE A LIGAND THE SAME WAY I GO THROUGH A LIGAND
-        # FIGURE OUT HOW TO MAKE A COPY OF THE LIGAND
+#UP NEXT:
+    #Go on case by case basis and removing some molecules where we can't remove the ligand properly
+        #Another option would be trying to remove the ligand individually on some of the molecules where the difference is > 0.1
+    #After this use what we learned to do medium molecules
+        #Ideally if we can get a set of about 400 good molecules
+import fnmatch
 
 from openbabel import openbabel
 import time
 from openbabel import pybel
 import glob
 import io
+import os
+import fnmatch
 from PIL import ImageTk, Image
 pds = 0
 #TRANSITION WELL BETWEEN atomic numbers and atom names for readability
@@ -84,9 +81,6 @@ def transition_metal_counter(molecule):
     return t_metals
 
 def find_ligand_v2(molecule):
-    ph_neighbors = 0
-    b = False
-    flag = False
     mol = molecule.OBMol
     print("Molecules # of atoms: ", mol.NumAtoms())
     for atom in openbabel.OBMolAtomIter(mol):
@@ -104,7 +98,6 @@ def find_ligand_v2(molecule):
                     atomstodelete.clear()
                     break
                 # print("Bond Index of atom: ", atomOB.GetIdx())
-                # if molecule.atoms[atomOB.GetIdx()].atomicnum == 6:
                 if mol.GetAtom(atomOB.GetIdx()).GetAtomicNum() == 6:
                     seen_atoms.append(atomOB.GetIdx())
                     atomstodelete.append(atomOB.GetIdx())
@@ -122,7 +115,7 @@ def find_ligand_v2(molecule):
     print("Order of seen Idx:", seen_atoms)
     return mol
 
-#and (atomOB.GetAtomicNum() == 15 or atomOB.GetAtomicNum() == 6 or atomOB.GetAtomicNum() == 1)
+
 def find_ligand_v2_dfs(atom):
     for atomOB in openbabel.OBAtomAtomIter(atom):
         if atomOB.GetAtomicNum() == 46:
@@ -140,19 +133,23 @@ def find_ligand_v2_dfs(atom):
         if atomOB.GetIdx in seen_atoms:
             find_ligand_v2_dfs(atomOB)
 
-
-    # print(seen_atoms)
 mol_num = 0
 tri_num = 0
 print("Welcome")
 print("What do you want to do: \n1) Sort triphenylphosphines AND output them? \n"
       "2) Sort Palladiums, get sizes of molecules, and output sorted Pds \n"
       "3) Get Number of transition metals from file\n"
-      "4) Change out phenyl for methyl")
+      "4) Remove PPh3\n"
+      "5) Get total energy number from already calculated opt.mol files\n"
+      "6) Choose this for lining up mismatched stoichs...\n"
+      "7) Convert xyz files to mol files\n"
+      "8) Find energy for specific stoich value")
 userInput = input()
 if (userInput == "1"):
+    print("pls list file (with extension)")
+    input = input()
     start_time = time.time()
-    for file in glob.glob("tmQM_X2.xyz"):
+    for file in glob.glob(input):
         for molecule in pybel.readfile("xyz", file):
             mol_num += 1
             smi = molecule.write(format = "smi")
@@ -171,13 +168,15 @@ if (userInput == "1"):
     print(f"Number of Triphenylphosphines:  {tri_num}")
 
 if (userInput == "2"):
+    print("pls list file (with extension)")
+    input = input()
     num_palladium_found = 0
     num_small = 0
     num_medium = 0
     num_large = 0
     num_other = 0
     start_time = time.time()
-    for file in glob.glob("PPh3_2.xyz"):
+    for file in glob.glob(input):
         for molecule in pybel.readfile("xyz", file):
             mol_num += 1
             smi = molecule.write(format="smi")
@@ -193,12 +192,12 @@ if (userInput == "2"):
                 num_palladium_found += 1
                 if (molecule.OBMol.NumAtoms() > 35 and molecule.OBMol.NumAtoms() < 75):
                     num_small += 1
-
+                    with io.open("file_" + str(mol_num) + ".mol", 'w', encoding='utf-8') as f:
+                        output = molecule.write("mol")
+                        f.write(output)
                 elif (molecule.OBMol.NumAtoms() >= 75 and molecule.OBMol.NumAtoms() < 125):
                     num_medium += 1
-                    with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
-                        output = molecule.write("xyz")
-                        f.write(output)
+
                 elif (molecule.OBMol.NumAtoms() >= 125):
                     num_large += 1
                 else:
@@ -219,8 +218,10 @@ if (userInput == "2"):
     print(f"Number of undefined Palladium: {num_other}")
 
 if (userInput == "3"):
+    print("pls list file (with extension)")
+    input = input()
     start_time = time.time()
-    for file in glob.glob("PPh3-Pd_small"):
+    for file in glob.glob(input):
         for molecule in pybel.readfile("xyz", file):
             mol_num += 1
             smi = molecule.write(format="smi")
@@ -234,13 +235,16 @@ if (userInput == "3"):
         for y in t_metals:
             if x == y:
                 print (t_metals_translation[x], "has", t_metals[y], "molecules")
+
 if (userInput == "4"):
+    print("pls list file (with extension)")
+    input = input()
     correct_PPh3_id = 0
     incorrect_PPh3_id = 0
     one_ligand = 0
     two_ligand = 0
     start_time = time.time()
-    for file in glob.glob("PPh3-Pd_medium.xyz"):
+    for file in glob.glob(input):
         for molecule in pybel.readfile("xyz", file):
             mol_num += 1
             print("Molecule Number:", mol_num)
@@ -253,9 +257,15 @@ if (userInput == "4"):
                         f.write(output)
                 if len(atomstodelete) == 68:
                     two_ligand += 1
+                    with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
+                        output = mol.write("xyz")
+                        f.write(output)
                 correct_PPh3_id +=1
             else:
                 incorrect_PPh3_id +=1
+                with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
+                    output = mol.write("xyz")
+                    f.write(output)
 
             print('\n')
 
@@ -270,6 +280,100 @@ if (userInput == "4"):
     print("Number of mols with 1 PPh3:", one_ligand)
     print("Number of mosl with 2 PPh3s:", two_ligand)
 
+if (userInput == "5"):
+    input_one = input("pls list file (containing opt.mols)")
+    stoich_in = input("Do you want to print stoichs(s) or energies(e)?")
+    def findTotalEnergy():
+        import os
+        file_counter = 0
+
+        # Define the location of the directory
+        path = r"/Users/AndrewHartsfield/PycharmProjects/WillRenameLater/" + input_one
+
+        for filenames in os.listdir(path):
+            if fnmatch.fnmatch(filenames, '*.opt.mol'):
+                with open(os.path.join(path, filenames)) as myfile:
+                    file_counter += 1
+                    file_contents = myfile.readlines()
+                    start_int = file_contents[0].find("Stoichiometry")
+                    start_int_energy = file_contents[2].find("energy:")
+                    end_of_stoich = 0
+                    for i in range(len(file_contents[0])):
+                        if i > 13:
+                            if file_contents[0][i] == '|':
+                                end_of_stoich = i
+                    if (stoich_in == 's'):
+                        print(file_contents[0][start_int + 16:end_of_stoich])
+                    elif(stoich_in == 'e'):
+                        print(file_contents[2][start_int_energy + 8:start_int_energy + 25])
+    findTotalEnergy()
+
+if userInput == '6':
+    print("pls list file (containing opt.mols)")
+    input_one = input()
+    print("pls give txt file contained stoichs")
+    input_two = input()
+    path = r"/Users/AndrewHartsfield/PycharmProjects/WillRenameLater/" + input_one
+    file = open(input_two)
+    # print(file.readlines()[0])
+    for i in file:
+        variable = i
+        for filenames in os.listdir(path):
+            if fnmatch.fnmatch(filenames, '*.opt.mol'):
+                with open(os.path.join(path, filenames)) as myfile:
+                    file_contents = myfile.readlines()
+                    start_int = file_contents[0].find("Stoichiometry")
+                    start_int_energy = file_contents[2].find("energy:")
+                    end_of_stoich = 0
+                    for i in range(len(file_contents[0])):
+                        if i > 13:
+                            if file_contents[0][i] == '|':
+                                end_of_stoich = i-1
+                    deez = file_contents[0][start_int+16:end_of_stoich] + '\n'
+                    # print(variable, deez)
+                    #+ '\n'
+                    if variable == deez:
+                        # print(file_contents[0][start_int + 16:end_of_stoich])
+                        print(file_contents[2][start_int_energy + 8:start_int_energy + 25])
+                        break
+
+if userInput == '7':
+    print("pls list xyz containing all xyz's in same file")
+    input = input()
+    for file in glob.glob(input):
+        for molecule in pybel.readfile("xyz", file):
+            mol_num += 1
+            with io.open("file_" + str(mol_num) + ".mol", 'w', encoding='utf-8') as f:
+                output = molecule.write("mol")
+                f.write(output)
+    print("Run through: ", mol_num)
+
+if userInput == '8':
+    print("Please list stoich you wish to find: ")
+    input_two = input()
+    print("pls list file (containing opt.mols)")
+    input_one = input()
+    path = r"/Users/AndrewHartsfield/PycharmProjects/WillRenameLater/" + input_one
+
+    for filenames in os.listdir(path):
+        if fnmatch.fnmatch(filenames, '*.opt.mol'):
+            with open(os.path.join(path, filenames)) as myfile:
+                file_contents = myfile.readlines()
+                start_int = file_contents[0].find("Stoichiometry")
+                start_int_energy = file_contents[2].find("energy:")
+                end_of_stoich = 0
+                for i in range(len(file_contents[0])):
+                    if i > 13:
+                        if file_contents[0][i] == '|':
+                            end_of_stoich = i - 1
+                deez = file_contents[0][start_int + 16:end_of_stoich] + '\n'
+                # print(variable, deez)
+                # + '\n'
+                if input_two + '\n' == deez:
+                    # print(file_contents[0][start_int + 16:end_of_stoich])
+                    print(filenames)
+                    print(input_two, " energy is ",file_contents[2][start_int_energy + 8:start_int_energy + 25])
+                    break
 
 
 
