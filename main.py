@@ -1,6 +1,7 @@
-#UP NEXT:
-    #There isn't the same amount of molecules under (with) vs. (removed)
-        #253 vs. 255
+#When trying to display coordination energies...
+    #Make sure to first print stoichs from REMOVED mol files
+    #Then choose mismatches stoichs option (5) and perform on both removed pph3 files and not removed
+        #This will ensure that everything is lined up properly with energies
 import fnmatch
 
 from openbabel import openbabel
@@ -139,10 +140,11 @@ print("What do you want to do: \n1) Sort triphenylphosphines AND output them? \n
       "2) Sort Palladiums, get sizes of molecules, and output sorted Pds \n"
       "3) Get Number of transition metals from file\n"
       "4) Remove PPh3\n"
-      "5) Get total energy number from already calculated opt.mol files\n"
-      "6) Choose this for lining up mismatched stoichs...\n"
-      "7) Convert xyz files to mol files\n"
-      "8) Find energy for specific stoich value")
+      "5) Choose this for lining up mismatched stoichs...\n"
+      "6) Convert xyz files to mol files\n"
+      "7) Find energy for specific stoich value\n"
+      "8) Output stoichs for .mols\n"
+      "9) Output energies for .opt.mols\n")
 userInput = input()
 if (userInput == "1"):
     print("pls list file (with extension)")
@@ -245,16 +247,17 @@ if (userInput == "4"):
     start_time = time.time()
     for file in glob.glob(input):
         for molecule in pybel.readfile("xyz", file):
-            mol_num += 1
             print("Molecule Number:", mol_num)
             mol = pybel.Molecule(find_ligand_v2(molecule))
             if len(atomstodelete) % 34 == 0:
                 if len(atomstodelete) == 34:
+                    mol_num += 1
                     one_ligand += 1
                     with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
                         output = mol.write("xyz")
                         f.write(output)
                 if len(atomstodelete) == 68:
+                    mol_num += 1
                     two_ligand += 1
                     with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
                         output = mol.write("xyz")
@@ -262,9 +265,9 @@ if (userInput == "4"):
                 correct_PPh3_id +=1
             else:
                 incorrect_PPh3_id +=1
-                with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
-                    output = mol.write("xyz")
-                    f.write(output)
+                # with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
+                #     output = mol.write("xyz")
+                    # f.write(output)
 
             print('\n')
 
@@ -279,59 +282,59 @@ if (userInput == "4"):
     print("Number of mols with 1 PPh3:", one_ligand)
     print("Number of mosl with 2 PPh3s:", two_ligand)
 
-if (userInput == "5"):
-    input_one = input("pls list file (containing opt.mols)")
-    stoich_in = input("Do you want to print stoichs(s) or energies(e)?")
+# if (userInput == "5"):
+#     input_one = input("pls list file (containing opt.mols)")
+#     stoich_in = input("Do you want to print stoichs(s) or energies(e)?")
+#
+#     def findTotalEnergy():
+#         import os
+#         file_counter = 0
+#         num_mols = 0
+#         # Define the location of the directory
+#         path = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
+#
+#         for filenames in os.listdir(path):
+#             if fnmatch.fnmatch(filenames, '*.opt.mol'):
+#                 with open(os.path.join(path, filenames)) as myfile:
+#                     file_counter += 1
+#                     file_contents = myfile.readlines()
+#                     for i in range(len(filenames)):
+#                         if filenames[i] == '_':
+#                             startIdx = i+1
+#                         if filenames[i] == '.':
+#                             endIdx = i
+#                             break
+#                     file_number = filenames[startIdx: endIdx]
+#                     for filenames_two in os.listdir(path):
+#                         if fnmatch.fnmatch(filenames_two, '*.mol'):
+#                             with open(os.path.join(path, filenames_two)) as myfile_two:
+#                                 file_contents_two = myfile_two.readlines()
+#                                 for i in range(len(filenames_two)):
+#                                     if filenames_two[i] == '_':
+#                                         startIdx_two = i + 1
+#                                     if filenames_two[i] == '.':
+#                                         endIdx_two = i
+#                                         break
+#                                 file_number_two = filenames_two[startIdx_two: endIdx_two]
+#
+#                         #WHEN WE FIND A MATCH BETWEEN .MOL AND .OPT.MOL
+#                         if file_number == file_number_two:
+#                             stoich_index = file_contents_two[0].find("Stoichiometry")
+#                             stoich_end = file_contents_two[0].find("MND")
+#                             energy_index = file_contents[0].find("energy")
+#                             energy_end = file_contents[0].find("gnorm")
+#                             if stoich_index != -1:
+#                                 num_mols += 1
+#                                 # print(file_number, "should match", file_number_two)
+#                                 # print(file_contents_two[0][stoich_index+16:stoich_end-2])
+#                                 if stoich_in == 's':
+#                                     print(file_contents_two[0][stoich_index + 16:stoich_end - 2])
+#                                 if stoich_in == 'e':
+#                                     print(file_contents[0][energy_index + 8:energy_end])
+#         print(num_mols)
+#     findTotalEnergy()
 
-    def findTotalEnergy():
-        import os
-        file_counter = 0
-        num_mols = 0
-        # Define the location of the directory
-        path = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
-
-        for filenames in os.listdir(path):
-            if fnmatch.fnmatch(filenames, '*.opt.mol'):
-                with open(os.path.join(path, filenames)) as myfile:
-                    file_counter += 1
-                    file_contents = myfile.readlines()
-                    for i in range(len(filenames)):
-                        if filenames[i] == '_':
-                            startIdx = i+1
-                        if filenames[i] == '.':
-                            endIdx = i
-                            break
-                    file_number = filenames[startIdx: endIdx]
-                    for filenames_two in os.listdir(path):
-                        if fnmatch.fnmatch(filenames_two, '*.mol'):
-                            with open(os.path.join(path, filenames_two)) as myfile_two:
-                                file_contents_two = myfile_two.readlines()
-                                for i in range(len(filenames_two)):
-                                    if filenames_two[i] == '_':
-                                        startIdx_two = i + 1
-                                    if filenames_two[i] == '.':
-                                        endIdx_two = i
-                                        break
-                                file_number_two = filenames_two[startIdx_two: endIdx_two]
-
-                        #WHEN WE FIND A MATCH BETWEEN .MOL AND .OPT.MOL
-                        if file_number == file_number_two:
-                            stoich_index = file_contents_two[0].find("Stoichiometry")
-                            stoich_end = file_contents_two[0].find("MND")
-                            energy_index = file_contents[0].find("energy")
-                            energy_end = file_contents[0].find("gnorm")
-                            if stoich_index != -1:
-                                num_mols += 1
-                                # print(file_number, "should match", file_number_two)
-                                # print(file_contents_two[0][stoich_index+16:stoich_end-2])
-                                if stoich_in == 's':
-                                    print(file_contents_two[0][stoich_index + 16:stoich_end - 2])
-                                if stoich_in == 'e':
-                                    print(file_contents[0][energy_index + 8:energy_end])
-        print(num_mols)
-    findTotalEnergy()
-
-if userInput == '6':
+if userInput == '5':
     #Grab first stoich frome stoich file
     #start comparing it agaisnt removed stoichs
     #when you make a match print energy for opt.mol
@@ -366,55 +369,14 @@ if userInput == '6':
                                             if removed_energy != file_contents_two[0][9:25]:
                                                 removed_energy = file_contents_two[0][9:25]
                                                 print(removed_energy)
+                                    else:
+                                        continue
                             break
 
     print("Number of matches found: ",match_count)
 
 
-
-    # for i in file:
-    #     variable = i
-    #     for filenames in os.listdir(path):
-    #         if fnmatch.fnmatch(filenames, '*.mol'):
-    #             with open(os.path.join(path, filenames)) as myfile:
-    #                 file_contents = myfile.readlines()
-    #                 stoich_index = file_contents[0].find("Stoichiometry")
-    #                 stoich_end = file_contents[0].find("MND")
-    #                 if stoich_index != -1:
-    #                     #something is going wrong here to do with the index
-    #                     # print(file.readlines()[0])
-    #                     print(file.readlines(1))
-    #                     print(file_contents[0][stoich_index+16:stoich_end-2])
-                        # if file.readlines()[0] == file_contents[0][stoich_index+16:stoich_end-2]:
-                        #     print(file_contents[0][stoich_index+16:stoich_end-2])
-                        #     file_ext_two = filenames.find('.')
-                        #     file_with_ext = filenames[0:file_ext_two]
-
-                        # for filenames_two in os.listdir(path):
-                        #     if fnmatch.fnmatch(filenames_two, '*.opt.mol'):
-                        #         with open(os.path.join(path, filenames_two)) as myfile_two:
-                        #             file_contents_two = myfile_two.readlines()
-                        #             file_ext = filenames_two.find('.')
-                        #             file_no_ext = filenames_two[0:file_ext]
-                        #             if file_with_ext == file_no_ext:
-                        #                 if input_two[0]
-
-                    # start_int = file_contents[0].find("Stoichiometry")
-                    # start_int_energy = file_contents[2].find("energy:")
-                    # end_of_stoich = 0
-                    # for i in range(len(file_contents[0])):
-                    #     if i > 13:
-                    #         if file_contents[0][i] == '|':
-                    #             end_of_stoich = i-1
-                    # deez = file_contents[0][start_int+16:end_of_stoich] + '\n'
-                    # # print(variable, deez)
-                    # #+ '\n'
-                    # if variable == deez:
-                    #     # print(file_contents[0][start_int + 16:end_of_stoich])
-                    #     print(file_contents[2][start_int_energy + 8:start_int_energy + 25])
-                    #     break
-
-if userInput == '7':
+if userInput == '6':
     print("pls list xyz containing all xyz's in same file")
     input = input()
     for file in glob.glob(input):
@@ -425,7 +387,7 @@ if userInput == '7':
                 f.write(output)
     print("Run through: ", mol_num)
 
-if userInput == '8':
+if userInput == '7':
     print("Please list stoich you wish to find: ")
     input_two = input()
     print("pls list file (containing opt.mols)")
@@ -451,6 +413,55 @@ if userInput == '8':
                     print(filenames)
                     print(input_two, " energy is ",file_contents[2][start_int_energy + 8:start_int_energy + 25])
                     break
+
+if userInput == '8':
+    input_one = input("pls list file (containing .mols)")
+    def findTotalEnergy():
+        import os
+        file_counter = 0
+        num_mols = 0
+        # Define the location of the directory
+        path = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
+
+        for filenames in os.listdir(path):
+            if fnmatch.fnmatch(filenames, '*.mol'):
+                with open(os.path.join(path, filenames)) as myfile:
+                    file_counter += 1
+                    file_contents = myfile.readlines()
+                    stoich_index = file_contents[0].find("Stoichiometry")
+                    stoich_end = file_contents[0].find("MND")
+                    if stoich_index != -1:
+                        num_mols += 1
+                        print(file_contents[0][stoich_index + 16:stoich_end - 2])
+        print(num_mols)
+
+
+    findTotalEnergy()
+
+if userInput == '9':
+    input_one = input("pls list file (containing opt.mols)")
+    def findTotalEnergy():
+        import os
+        file_counter = 0
+        num_mols = 0
+        # Define the location of the directory
+        path = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
+
+        for filenames in os.listdir(path):
+            if fnmatch.fnmatch(filenames, '*.opt.mol'):
+                with open(os.path.join(path, filenames)) as myfile:
+                    file_counter += 1
+                    file_contents = myfile.readlines()
+                    energy_index = file_contents[0].find("energy")
+                    energy_end = file_contents[0].find("gnorm")
+                    if energy_index != -1:
+                        num_mols += 1
+                        print(file_contents[0][energy_index + 8:energy_end])
+        print(num_mols)
+
+
+    findTotalEnergy()
+
 
 
 
