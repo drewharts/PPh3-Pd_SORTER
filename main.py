@@ -7,6 +7,7 @@ import io
 import os
 import fnmatch
 import copy
+import re
 
 import ligandClass
 import moleculeClass
@@ -145,7 +146,7 @@ print("What do you want to do: \n1) Sort triphenylphosphines AND output them? \n
       "5) Choose this for lining up mismatched CSDs...\n"
       "6) Convert xyz files to mol files\n"
       "7) Find energy for specific stoich value\n"
-      "8) Output stoichs for .mols\n"
+      "8) Output stoichs for .xyz's in directory\n"
       "9) Output energies for .opt.mols\n"
       "10) Remove <one> ligand\n")
 userInput = input()
@@ -186,19 +187,13 @@ if (userInput == "2"):
             smi = molecule.write(format="smi")
             if (metal_counter(molecule)):
 
-                #outputing sorted fires (if they contain Palladium from metal_counter function
-                # with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
-                #     output = molecule.write("xyz")
-                #     f.write(output)
-                # pybel.Outputfile("xyz","output.xyz",opt=None,overwrite=True).write(molecule)
-
                 #sort Palladium depending on size of molecule (small, medium, and large)
                 num_palladium_found += 1
                 if (molecule.OBMol.NumAtoms() > 35 and molecule.OBMol.NumAtoms() < 75):
                     num_small += 1
-                    # with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
-                    #     output = molecule.write("xyz")
-                    #     f.write(output)
+                    with io.open("file_" + str(mol_num) + ".xyz", 'w', encoding='utf-8') as f:
+                        output = molecule.write("xyz")
+                        f.write(output)
 
                 elif (molecule.OBMol.NumAtoms() >= 75 and molecule.OBMol.NumAtoms() < 125):
                     num_medium += 1
@@ -347,22 +342,24 @@ if userInput == '6':
 
 if userInput == '7':
     print("Please list stoich you wish to find: ")
-    input_two = input()
-    print("pls list file (containing opt.mols)")
+    csd_code_value = input()
+    print("pls list file (containing opt.xyz)")
     input_one = input()
-    path = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
+    directory = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
 
-    for filenames in os.listdir(path):
-        if fnmatch.fnmatch(filenames, '*.mol') and not fnmatch.fnmatch(filenames,'*.opt.mol'):
-            with open(os.path.join(path, filenames)) as myfile:
-                file_contents = myfile.readlines()
-                start_int = file_contents[0].find("Stoichiometry")
-                stoich_end = file_contents[0].find("MND")
-                end_of_stoich = 0
-                grabbedStoich = (file_contents[0][start_int + 16:stoich_end - 3])
-                if input_two == grabbedStoich:
-                    print(filenames)
-                    break
+    # Loop through all files in the directory
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        # Check if the file is a text file
+        if os.path.isfile(filepath) and filename.endswith(".xyz"):
+            # Open the file and read its contents
+            with open(filepath, "r") as f:
+                file_contents = f.read()
+                # Search for the CSD_Code value in the file contents
+                match = re.search(r"CSD_code\s*=\s*" + csd_code_value, file_contents)
+                # If the CSD_Code value is found, print the filename and line number
+                if match:
+                    print(f"Found {csd_code_value} in {filename}")
 
 if userInput == '8':
     input_one = input("pls list file (containing .mols)")
@@ -373,7 +370,7 @@ if userInput == '8':
         # Define the location of the directory
         path = r"/Users/drewhartsfield/PycharmProjects/PPh3-Pd_SORTER/" + input_one
 
-        for i in range(1, 511):
+        for i in range(1, 1000):
             for filenames in os.listdir(path):
                     filename = "file_" + str(i) + ".xyz"
                     if fnmatch.fnmatch(filenames, filename):
