@@ -1,7 +1,15 @@
-import os
+# This is step 1 in solving problem.
+#Problem this file solves:
+    #Having two directories of structures
+    #One directory has full structure and another has edited structure
+    #You need to keep track of which structure from one directory matches with it counterpart in the other directory.
 
 #This python script will iterate through the .com files from both directories and find the matching structures
 #It will output the matching structures file number's in the specified output file
+
+#MAIN LOGIC - checking Pd xyz coordinates and matching them to its counterpart in another directory
+
+import os
 
 def compare_files(directory1, directory2, output_file_path):
     files1 = os.listdir(directory1)
